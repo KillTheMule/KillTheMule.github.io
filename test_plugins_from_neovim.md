@@ -1,7 +1,7 @@
 # Overview
 
 [Neovim](https://github.com/neovim/neovim) contains a testing infrastructure based on 
-[busted](http://olivinelabs.com/busted/). It's not only used to do unit test, but also integration
+[busted](http://olivinelabs.com/busted/). It's not only used to do unit tests, but also integration
 tests (called "functional tests" from now on). It's so nice to work with that I'm using it to write
 tests for my own [plugin](https://github.com/KillTheMule/nvimpam/), and I want to point out how to
 do this. Here's a quick overview over the pros and cons of this approach, after which we'll dive
