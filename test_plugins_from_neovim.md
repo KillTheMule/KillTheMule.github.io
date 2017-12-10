@@ -13,7 +13,7 @@ right in:
 * Directly assert screen state, i.e. what your users will see
   * This includes a lot of parameters you could still check independently, but probably won't:
     Windows arrangement (including exact sizes), status line, cursor position, highlighting
-    information
+    information etc.
 ### Cons
 
  * It's a quite "heavy handed" approach, both by the additional code used (the neovim source), and
@@ -127,7 +127,7 @@ end)
 ```
  
  The first 5 lines contain some general setup and some shorthands. The `describe` block contains
- the first test group. You can have several of those if you want, and easy one contains several
+ the first test group. You can have several of those if you want, and each one contains several
  `it` blocks, which are the individual tests. In the `describe` block, the `before_each` and
  `after_each` blocks do some setup/teardown common to all tests in this block. Since we want
  to do screen tests, we make a new screen for all the tests and attach it to our neovim instance
@@ -153,11 +153,15 @@ end)
  
  ### How to write an `expect` call
  
- Your first reaction was probably the right one: No one want to write those `expect` calls by
+ Your first reaction was probably the right one: No one wants to write those `expect` calls by
  hand. So here's how to do it: Write the test up to this call, but then put
  `screen:snapshot_util()` in its place. Run the test, and the exact `expect` call will be printed
  to the terminal, ready for you to copy & paste. *Of course* you will need to verify that it
  looks exactly the way you want it to, otherwise your test will be quite useless.
+ 
+ *Note*: The double brackets `[[` / `]]` denote a multiline string in lua. Variables can not be
+ substituted within it. The `expect` call will strip common indentation, so code formatting still
+ can work, just like you see above.
  
  ### Advanced usage
  
@@ -178,10 +182,10 @@ end)
        I'm using an environment variable to only run those test for a subset of the testing
        matrix, since it's quite expensive. On windows, you will need to run `build.bat` as shown.
        Note the use of [caching](https://github.com/KillTheMule/nvimpam/blob/master/appveyor.yml#L67),
-       so the deps won't need to be build every time.
+       so the deps won't need to be built every time.
  * Travis
      * Again, see my [.travis.yml](https://github.com/KillTheMule/nvimpam/blob/master/.travis.yml#L31),
-       this is somewhat easier than on appveyor still, just run the commands in the right directory.
+       this is somewhat easier than appveyor still, just run the commands in the right directory.
        Never mind the call to `cargo`, this is just building my plugin because I'm writing it in Rust.
  
  
