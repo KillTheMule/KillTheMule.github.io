@@ -14,12 +14,10 @@ right in:
   * This includes a lot of parameters you could still check independently, but probably won't:
     Windows arrangement (including exact sizes), status line, cursor position, highlighting
     information etc.
+    
 ### Cons
 
- * It's a quite "heavy handed" approach, both by the additional code used (the neovim source), and
-   the work needed to be done by the system running the tests (need to compile neovim)
-   * Caching and git submodules help. It does not mean you have to do work yourself, it's the 
-     computer sweating, and I personally don't mind that, considering the advantages.
+ * You can only test your plugins this way with neovim.
      
 # How to run a test
 
@@ -142,7 +140,7 @@ end)
  Let's assume our plugin provides "MyPluginFunction" which will highlight the word "line" as an
  error (that is, it's just `syn keyword Error line`), which we want to test. We insert some text
  containing the word "line", and call our function. After that, we assert our screen state
- using `screen:expect`. The part `{1:lin^e}` tells you this word was colored from what is
+ using `screen:expect` (**Don't** try to write this by hand. See below for an easy way to construct your assert calls.). The part `{1:lin^e}` tells you this word was colored from what is
  given in color `[1] = {foreground = Screen.colors.Grey100, background = Screen.colors.Red}`, and
  the cursor is on the letter "e", which is what we were after. There's still more to see - the
  width and height of the window is asserted, the color of the tildes, and the rest of the text.
