@@ -75,6 +75,35 @@ pub fn resend_all_atomic(&self, nvim: &mut Neovim) -> Result<(), Error> {
   The essence is that we're assembling a `Vec` (if you don't know Rust, take it as an Array) callled `calls`, that itself contains 2-`Vec`s, which
   follow the pattern `(function, args)`. Our function is `nvim_command`, and in the line below this you're seeing the familiar command
   we've been using above, too. After assembling it we send `calls` to neovim via `nvim.call_atomic`.
+  
+  
+  ### Batching the calls
+  
+  The always vigilant **@bfredl** pointed out another way, namely that viml itself provides a way
+  to batch several command: Via the pipe operator `|`. This makes our function look like
+  
+  ```rust
+  pub fn resend_all_batch(&self, nvim: &mut Neovim) -> Result<(), Error> {
+    // Just an estimate, not worth a lot
+    let mut command = String::with_capacity(10 + 12 * self.folds.len());
+    command.push_str("normal! zE");
+
+    // TODO: use nvim_call_atomic
+    for range in self.folds.keys() {
+      command.push_str(&format!("|{},{}fo", range[0] + 1, range[1] + 1));
+    }
+
+    nvim.command(&command).context("Fold command failed!")?;
+
+    Ok(())
+  }
+  ```
+  
+  We're constructing out command as `normal! zE|1,3fo|100,120fo` and so on. Note that as a little
+  ad-hoc optimization I've reserved memory for `10 + 12 * number of folds` chars, which is enough
+  if our file has less than 10k lines, so it's a little bit optimistic towards our benchmark. If the file gets larger, we'd be seeing several reallocations, but I don't think they'd matter much in this context anyways.
+  
+  Y'know what? I've looked at it, I left out the optimization... and it went faster! The difference was below the variance, so as I said, it doesn't matter much. Was fun anyways :)
 
    ### Using lua
    
@@ -198,10 +227,11 @@ fn bench_folds(b: &mut Bencher) {
  
   benchmak | result |variance
  ---------|--------|----
-|test bench_folds        |26,301,579 ns/iter |+/- 4,581,534
-|test bench_folds_atomic |  15,502,505 ns/iter |+/- 4,035,317
-|test bench_folds_lua    |  15,187,042 ns/iter |+/- 3,967,311
-|test bench_folds_viml | 15,198,539 ns/iter |+/- 3,855,720
+test bench_folds        |26,301,579 ns/iter |+/- 4,581,534
+test bench_folds_atomic |  15,502,505 ns/iter |+/- 4,035,317
+test bench_folds_batch  |  15,410,856 ns/iter |+/- 4,043,721
+test bench_folds_lua    |  15,187,042 ns/iter |+/- 3,967,311
+test bench_folds_viml | 15,198,539 ns/iter |+/- 3,855,720
  
  
  We are seeing a nice speedup from not doing so many call, but we are not really seeing a diffence by from tuning down the volume
@@ -216,6 +246,7 @@ fn bench_folds(b: &mut Bencher) {
  ---------|--------|----
  test bench_folds       | 293,494,416 ns/iter |+/- 107,315,251
  test bench_folds_atomic |   21,941,457 ns/iter |+/- 2,571,597
+ test bench_folds_batch  |  15,798,536 ns/iter |+/- 3,716,531
  test bench_folds_lua    | 22,725,711 ns/iter |+/- 2,751,634
  test bench_folds_viml |  17,184,134 ns/iter |+/- 3,678,667
  
@@ -225,6 +256,7 @@ fn bench_folds(b: &mut Bencher) {
  Nevertheless, what we're also seeing is that the viml version pulls slightly ahead. The difference to the lua version could be
  explained by the fact that the lua version calls out to viml anyways, so that contains an additional indirection. But  why is
  `call_atomic` a bit slower than viml? No idea on my side, but then again, I don't really know how all of that is implemented.
+
  
  Anyways, that's it for out little benchmark excurion. Comments, criticism? Let me know through the
  [neovim reddit](https://www.reddit.com/r/neovim/). Thanks for reading!
