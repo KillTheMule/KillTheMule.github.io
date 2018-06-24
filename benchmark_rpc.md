@@ -87,6 +87,8 @@ pub fn resend_all_atomic(&self, nvim: &mut Neovim) -> Result<(), Error> {
     // Just an estimate, not worth a lot
     let mut command = String::with_capacity(10 + 12 * self.folds.len());
     command.push_str("normal! zE");
+    nvim.command(&command)?;
+    command.clear();
 
     // TODO: use nvim_call_atomic
     for range in self.folds.keys() {
@@ -99,7 +101,7 @@ pub fn resend_all_atomic(&self, nvim: &mut Neovim) -> Result<(), Error> {
   }
   ```
   
-  We're constructing out command as `normal! zE|1,3fo|100,120fo` and so on. Note that as a little
+  We're constructing our fold command as `1,3fo|100,120fo` and so on. Note that as a little
   ad-hoc optimization I've reserved memory for `10 + 12 * number of folds` chars, which is enough
   if our file has less than 10k lines, so it's a little bit optimistic towards our benchmark. If the file gets larger, we'd be seeing several reallocations, but I don't think they'd matter much in this context anyways.
   
@@ -246,9 +248,9 @@ test bench_folds_viml | 15,198,539 ns/iter |+/- 3,855,720
  ---------|--------|----
  test bench_folds       | 293,494,416 ns/iter |+/- 107,315,251
  test bench_folds_atomic |   21,941,457 ns/iter |+/- 2,571,597
- test bench_folds_batch  |  15,798,536 ns/iter |+/- 3,716,531
+ test bench_folds_batch  |  16,394,150 ns/iter |+/- 3,716,531
  test bench_folds_lua    | 22,725,711 ns/iter |+/- 2,751,634
- test bench_folds_viml |  17,184,134 ns/iter |+/- 3,678,667
+ test bench_folds_viml |   16,917,770 ns/iter |+/- 3,678,667
  
  Whoaaa now that is a speedup! More than 10 times faster just by combining all the calls into one! I'll need to find a more 
  complicated file still!
